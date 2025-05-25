@@ -2,7 +2,7 @@ name: 走一走
 
 on:
   schedule:
-    - cron: '6 13 * * *'
+    - cron: '12 13 * * *'
   workflow_dispatch:
 
 jobs:
