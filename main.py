@@ -223,19 +223,20 @@ if __name__ == "__main__":
         exit(1)
     else:
         # region 初始化参数
-        config = dict()
+        user_config = dict()
         try:
-            config = dict(json.loads(os.environ.get("CONFIG")))
+            user_config = dict(json.loads(os.environ.get("USER_CONFIG")))
+            step_config = dict(json.loads(os.environ.get("STEP_CONFIG")))
         except:
             print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
             traceback.print_exc()
             exit(1)
-        users = config.get('USER')
-        passwords = config.get('PWD')
+        users = user_config.get('USER')
+        passwords = user_config.get('PWD')
         if users is None or passwords is None:
             print("未正确配置账号密码，无法执行")
             exit(1)
-        min_step = get_int_value_default(config, 'MIN_STEP', 29000)
-        max_step = get_int_value_default(config, 'MAX_STEP', 29600)
+        min_step = get_int_value_default(step_config, 'MIN_STEP', 29000)
+        max_step = get_int_value_default(step_config, 'MAX_STEP', 29600)
         # endregion
         run_single_account(users, passwords)
