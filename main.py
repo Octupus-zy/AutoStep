@@ -218,15 +218,23 @@ def run_single_account(user_mi, passwd_mi):
 if __name__ == "__main__":
     # 北京时间
     time_bj = get_beijing_time()
-    if os.environ.__contains__("CONFIG") is False:
-        print("未配置CONFIG变量，无法执行")
+    min_step = 29950
+    max_step = 29999
+    if os.environ.__contains__("USER_CONFIG") is False:
+        print("未配置USER_CONFIG变量，无法执行")
         exit(1)
     else:
         # region 初始化参数
         user_config = dict()
+        step_config = dict()
         try:
             user_config = dict(json.loads(os.environ.get("USER_CONFIG")))
-            step_config = dict(json.loads(os.environ.get("STEP_CONFIG")))
+            if os.environ.__contains__("STEP_CONFIG") is False:
+                print("未配置STEP_CONFIG变量，使用默认值")
+            else:
+                step_config = dict(json.loads(os.environ.get("STEP_CONFIG")))
+                min_step = int(step_config.get('MIN_STEP'))
+                max_step = int(step_config.get('MAX_STEP'))
         except:
             print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
             traceback.print_exc()
@@ -236,7 +244,5 @@ if __name__ == "__main__":
         if users is None or passwords is None:
             print("未正确配置账号密码，无法执行")
             exit(1)
-        min_step = get_int_value_default(step_config, 'MIN_STEP', 29000)
-        max_step = get_int_value_default(step_config, 'MAX_STEP', 29600)
         # endregion
         run_single_account(users, passwords)
