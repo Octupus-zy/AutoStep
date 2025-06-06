@@ -210,7 +210,8 @@ def run_single_account(user_mi, passwd_mi):
 
 def get_wx_access_token():
     # 获取access token的url
-    url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}'.format(appID.strip(), appSecret.strip())
+    url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}'.format(
+        appID.strip(), appSecret.strip())
     response = requests.get(url).json()
     print(response)
     access_token = response.get('access_token')
@@ -233,7 +234,7 @@ def send_message(user_mi, step, success, message):
                 "value": step
             },
             "success": {
-                "value": '👍🏻' if success else '👎🏻'
+                "value": '成功' if success else '失败'
             },
             "message": {
                 "value": message
