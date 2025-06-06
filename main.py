@@ -111,8 +111,6 @@ class MiMotionRunner:
         except:
             self.log_str += f"获取accessToken异常:{traceback.format_exc()}\n"
             return 0, 0
-        # print("access_code获取成功！")
-        # print(code)
 
         url2 = "https://account.huami.com/v2/client/login"
         if self.is_phone:
@@ -144,11 +142,7 @@ class MiMotionRunner:
             }
         r2 = requests.post(url2, data=data2, headers=login_headers).json()
         login_token = r2["token_info"]["login_token"]
-        # print("login_token获取成功！")
-        # print(login_token)
         userid = r2["token_info"]["user_id"]
-        # print("userid获取成功！")
-        # print(userid)
 
         return login_token, userid
 
@@ -158,8 +152,6 @@ class MiMotionRunner:
         headers = {'User-Agent': 'MiFit/5.3.0 (iPhone; iOS 14.7.1; Scale/3.00)', 'X-Forwarded-For': self.fake_ip_addr}
         response = requests.get(url, headers=headers).json()
         app_token = response['token_info']['app_token']
-        # print("app_token获取成功！")
-        # print(app_token)
         return app_token
 
     # 主函数
@@ -195,24 +187,61 @@ class MiMotionRunner:
         data = f'userid={userid}&last_sync_data_time=1597306380&device_type=0&last_deviceid=DA932FFFFE8816E7&data_json={data_json}'
 
         response = requests.post(url, data=data, headers=head).json()
-        # print(response)
-        return f"修改步数（{step}）[" + response['message'] + "]", True
+        return f"修改步数（{step}）[" + response['message'] + "]", True, step
 
 
 def run_single_account(user_mi, passwd_mi):
     log_str = f"[{format_now()}]\n账号：{desensitize_user_name(user_mi)}"
     try:
         runner = MiMotionRunner(user_mi, passwd_mi)
-        exec_msg, success = runner.login_and_post_step(min_step, max_step)
+        exec_msg, success, step = runner.login_and_post_step(min_step, max_step)
         log_str += runner.log_str
         log_str += f'{exec_msg}\n'
         exec_result = {"user": user_mi, "success": success, "msg": exec_msg}
+        send_message(user_mi, step, success, "success")
     except:
         log_str += f"执行异常:{traceback.format_exc()}\n"
         log_str += traceback.format_exc()
         exec_result = {"user": user_mi, "success": False, "msg": f"执行异常:{traceback.format_exc()}"}
+        send_message(user_mi, 0, False, log_str)
     print(log_str)
     return exec_result
+
+
+def get_wx_access_token():
+    # 获取access token的url
+    url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}'.format(appID.strip(), appSecret.strip())
+    response = requests.get(url).json()
+    print(response)
+    access_token = response.get('access_token')
+    return access_token
+
+
+def send_message(user_mi, step, success, message):
+    body = {
+        "touser": openId.strip(),
+        "template_id": templateId.strip(),
+        "url": "https://weixin.qq.com",
+        "data": {
+            "date": {
+                "value": format_now()
+            },
+            "account": {
+                "value": user_mi
+            },
+            "step": {
+                "value": step
+            },
+            "success": {
+                "value": '👍🏻' if success else '👎🏻'
+            },
+            "message": {
+                "value": message
+            }
+        }
+    }
+    url = 'https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={}'.format(get_wx_access_token())
+    print(requests.post(url, json.dumps(body)).text)
 
 
 if __name__ == "__main__":
@@ -227,6 +256,7 @@ if __name__ == "__main__":
         # region 初始化参数
         user_config = dict()
         step_config = dict()
+        wx_config = dict()
         try:
             user_config = dict(json.loads(os.environ.get("USER_CONFIG")))
             if os.environ.__contains__("STEP_CONFIG") is False:
@@ -235,6 +265,15 @@ if __name__ == "__main__":
                 step_config = dict(json.loads(os.environ.get("STEP_CONFIG")))
                 min_step = int(step_config.get('MIN_STEP'))
                 max_step = int(step_config.get('MAX_STEP'))
+
+            if os.environ.__contains__("WX_CONFIG") is False:
+                print("未配置WX_CONFIG变量，无法发送消息")
+            else:
+                wx_config = dict(json.loads(os.environ.get("WX_CONFIG")))
+                appID = wx_config.get("APP_ID")
+                appSecret = wx_config.get("APP_SECRET")
+                openId = wx_config.get("OPEN_ID")
+                templateId = wx_config.get("TEMPLATE_ID")
         except:
             print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
             traceback.print_exc()
