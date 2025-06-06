@@ -198,7 +198,7 @@ def run_single_account(user_mi, passwd_mi):
         log_str += runner.log_str
         log_str += f'{exec_msg}\n'
         exec_result = {"user": user_mi, "success": success, "msg": exec_msg}
-        send_message(user_mi, step, success, log_str)
+        send_message(user_mi, step, True, '')
     except:
         log_str += f"执行异常:{traceback.format_exc()}\n"
         log_str += traceback.format_exc()
@@ -218,7 +218,7 @@ def get_wx_access_token():
     return access_token
 
 
-def send_message(user_mi, step, success, message):
+def send_message(user_mi, step, success, log_str):
     body = {
         "touser": openId.strip(),
         "template_id": templateId.strip(),
@@ -234,10 +234,7 @@ def send_message(user_mi, step, success, message):
                 "value": step
             },
             "success": {
-                "value": "True" if success else "False"
-            },
-            "message": {
-                "value": message
+                "value": "执行成功" if success else log_str
             }
         }
     }
