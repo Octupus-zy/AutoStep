@@ -198,7 +198,7 @@ def run_single_account(user_mi, passwd_mi):
         log_str += runner.log_str
         log_str += f'{exec_msg}\n'
         exec_result = {"user": user_mi, "success": success, "msg": exec_msg}
-        send_message(user_mi, step, success, "success")
+        send_message(user_mi, step, success, log_str)
     except:
         log_str += f"执行异常:{traceback.format_exc()}\n"
         log_str += traceback.format_exc()
@@ -234,7 +234,7 @@ def send_message(user_mi, step, success, message):
                 "value": step
             },
             "success": {
-                "value": "\u2714\ufe0f" if success else "\u274C\ufe0f"
+                "value": "True" if success else "False"
             },
             "message": {
                 "value": message
