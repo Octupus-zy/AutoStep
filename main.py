@@ -234,7 +234,7 @@ def send_message(user_mi, step, success, message):
                 "value": step
             },
             "success": {
-                "value": '成功' if success else '失败'
+                "value": "\u2714\ufe0f" if success else "\u274C\ufe0f"
             },
             "message": {
                 "value": message
