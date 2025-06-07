@@ -29,4 +29,4 @@ jobs:
           WX_CONFIG: ${{ secrets.WX_CONFIG }}
         run: |
           pip3 install requests pytz
-          python3 main.py
+          python3 AutoStep.py
