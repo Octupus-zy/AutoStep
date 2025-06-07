@@ -2,7 +2,7 @@ name: AutoStep
 
 on:
   schedule:
-    - cron: '40 13 * * *'
+    - cron: '55 12 * * *'
   workflow_dispatch:
 
 jobs:
