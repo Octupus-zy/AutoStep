@@ -1,0 +1,32 @@
+name: 走一走
+
+on:
+  schedule:
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout codes
+        uses: actions/checkout@v3
+      - name: Update system and install zsh
+        run: |
+          sudo -E apt-get -qq update
+          sudo -E apt-get install zsh -y
+
+      - name: 初始化Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
+      - name: 开始
+        env:
+          USER_CONFIG: ${{ secrets.USER_CONFIG }}
+          STEP_CONFIG: ${{ secrets.STEP_CONFIG }}
+          WX_CONFIG: ${{ secrets.WX_CONFIG }}
+        run: |
+          pip3 install requests pytz
+          python3 main.py

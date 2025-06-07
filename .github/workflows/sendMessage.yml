@@ -1,8 +1,8 @@
-name: 走一走
+name: SendMessage
 
 on:
   schedule:
-    - cron: '0 13 * * *'
+    - cron: '5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -16,17 +16,15 @@ jobs:
         run: |
           sudo -E apt-get -qq update
           sudo -E apt-get install zsh -y
-          
+
       - name: 初始化Python
         uses: actions/setup-python@v3
         with:
           python-version: 3.8
-          
+
       - name: 开始
         env:
-            USER_CONFIG: ${{ secrets.USER_CONFIG }}
-            STEP_CONFIG: ${{ secrets.STEP_CONFIG }}
-            WX_CONFIG: ${{ secrets.WX_CONFIG }}
+          WX_CONFIG: ${{ secrets.WX_CONFIG }}
         run: |
           pip3 install requests pytz
-          python3 main.py
+          python3 sendMessage.py
