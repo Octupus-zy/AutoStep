@@ -1,4 +1,4 @@
-name: 走一走
+name: AutoStep
 
 on:
   schedule:
