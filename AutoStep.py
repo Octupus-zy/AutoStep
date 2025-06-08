@@ -162,7 +162,7 @@ class MiMotionRunner:
         self.log_str += f"已设置为随机步数范围({min_step}~{max_step}) 随机值:{step}\n"
         login_token, userid = self.login()
         if login_token == 0:
-            return "登陆失败！", False
+            return "登陆失败！", False, 0
 
         t = get_time()
 
