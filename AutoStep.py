@@ -242,44 +242,39 @@ if __name__ == "__main__":
     time_bj = get_beijing_time()
     min_step = 29950
     max_step = 29999
-    # if os.environ.__contains__("USER_CONFIG") is False:
-    #     print("未配置USER_CONFIG变量，无法执行")
-    #     exit(1)
-    # else:
-    #     # region 初始化参数
-    #     user_config = dict()
-    #     step_config = dict()
-    #     wx_config = dict()
-    #     try:
-    #         user_config = dict(json.loads(os.environ.get("USER_CONFIG")))
-    #         if os.environ.__contains__("STEP_CONFIG") is False:
-    #             print("未配置STEP_CONFIG变量，使用默认值")
-    #         else:
-    #             step_config = dict(json.loads(os.environ.get("STEP_CONFIG")))
-    #             min_step = int(step_config.get('MIN_STEP'))
-    #             max_step = int(step_config.get('MAX_STEP'))
-    #
-    #         if os.environ.__contains__("WX_CONFIG") is False:
-    #             print("未配置WX_CONFIG变量，无法发送消息")
-    #         else:
-    #             wx_config = dict(json.loads(os.environ.get("WX_CONFIG")))
-    #             appID = wx_config.get("APP_ID")
-    #             appSecret = wx_config.get("APP_SECRET")
-    #             openId = wx_config.get("OPEN_ID")
-    #             templateId = wx_config.get("TEMPLATE_ID")
-    #     except:
-    #         print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
-    #         traceback.print_exc()
-    #         exit(1)
-    #     users = user_config.get('USER')
-    #     passwords = user_config.get('PWD')
-    #     if users is None or passwords is None:
-    #         print("未正确配置账号密码，无法执行")
-    #         exit(1)
-    #     # endregion
-    #     run_single_account(users, passwords)
-    appID = 'wxcfce4fbaf9687556'
-    appSecret = '56a9cfd1fa83b28ddb384a8a71b694da'
-    openId = 'ojt_C7fkFBFfMcnL74RCNZwDJqvQ'
-    templateId = 'Nchs0xVcBcvsRuD4IyTaTw6_-NTto8jOAf9_Bn5Qw0U'
-    run_single_account('1138897995@qq.com', 'zhangyu@520')
+    if os.environ.__contains__("USER_CONFIG") is False:
+        print("未配置USER_CONFIG变量，无法执行")
+        exit(1)
+    else:
+        # region 初始化参数
+        user_config = dict()
+        step_config = dict()
+        wx_config = dict()
+        try:
+            user_config = dict(json.loads(os.environ.get("USER_CONFIG")))
+            if os.environ.__contains__("STEP_CONFIG") is False:
+                print("未配置STEP_CONFIG变量，使用默认值")
+            else:
+                step_config = dict(json.loads(os.environ.get("STEP_CONFIG")))
+                min_step = int(step_config.get('MIN_STEP'))
+                max_step = int(step_config.get('MAX_STEP'))
+
+            if os.environ.__contains__("WX_CONFIG") is False:
+                print("未配置WX_CONFIG变量，无法发送消息")
+            else:
+                wx_config = dict(json.loads(os.environ.get("WX_CONFIG")))
+                appID = wx_config.get("APP_ID")
+                appSecret = wx_config.get("APP_SECRET")
+                openId = wx_config.get("OPEN_ID")
+                templateId = wx_config.get("TEMPLATE_ID")
+        except:
+            print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
+            traceback.print_exc()
+            exit(1)
+        users = user_config.get('USER')
+        passwords = user_config.get('PWD')
+        if users is None or passwords is None:
+            print("未正确配置账号密码，无法执行")
+            exit(1)
+        # endregion
+        run_single_account(users, passwords)
