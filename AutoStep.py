@@ -161,7 +161,7 @@ class MiMotionRunner:
         print(f"已设置为随机步数范围({min_step}~{max_step}) 随机值:{step}\n")
         login_token, userid, message = self.login()
         if login_token == 0:
-            return message,  0
+            return message, 0
 
         t = get_time()
 
@@ -242,8 +242,11 @@ if __name__ == "__main__":
     time_bj = get_beijing_time()
     min_step = 29950
     max_step = 29999
+    user_default = ''
     if os.environ.__contains__("USER_CONFIG") is False:
-        print("未配置USER_CONFIG变量，无法执行")
+        log_str = "未配置USER_CONFIG变量，无法执行"
+        print(log_str)
+        send_message(user_default, 0, log_str)
         exit(1)
     else:
         # region 初始化参数
@@ -267,9 +270,10 @@ if __name__ == "__main__":
                 appSecret = wx_config.get("APP_SECRET")
                 openId = wx_config.get("OPEN_ID")
                 templateId = wx_config.get("TEMPLATE_ID")
-        except:
-            print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
-            traceback.print_exc()
+        except Exception as e:
+            log_str = "CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少"
+            print(log_str)
+            send_message(user_default, 0, log_str)
             exit(1)
         users = user_config.get('USER')
         passwords = user_config.get('PWD')
