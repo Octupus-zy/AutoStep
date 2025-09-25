@@ -100,17 +100,17 @@ class MiMotionRunner:
         }
         r1 = requests.post(url1, data=data1, headers=login_headers, allow_redirects=False)
         if r1.status_code != 303:
-            self.log_str += "登录异常，status: %d\n" % r1.status_code
-            return 0, 0
+            log_str += "登录异常，status: %d\n" % r1.status_code
+            return 0, 0, log_str
         location = r1.headers["Location"]
         try:
             code = get_access_token(location)
             if code is None:
-                self.log_str += "获取accessToken失败\n"
-                return 0, 0
+                log_str += "获取accessToken失败\n"
+                return 0, 0, log_str
         except:
-            self.log_str += f"获取accessToken异常:{traceback.format_exc()}\n"
-            return 0, 0
+            log_str += f"获取accessToken异常:{traceback.format_exc()}\n"
+            return 0, 0, log_str
 
         url2 = "https://account.huami.com/v2/client/login"
         if self.is_phone:
@@ -144,7 +144,7 @@ class MiMotionRunner:
         login_token = r2["token_info"]["login_token"]
         userid = r2["token_info"]["user_id"]
 
-        return login_token, userid
+        return login_token, userid, ''
 
     # 获取app_token
     def get_app_token(self, login_token):
@@ -160,9 +160,9 @@ class MiMotionRunner:
             return "账号或密码配置有误", False
         step = str(random.randint(min_step, max_step))
         self.log_str += f"已设置为随机步数范围({min_step}~{max_step}) 随机值:{step}\n"
-        login_token, userid = self.login()
+        login_token, userid, message  = self.login()
         if login_token == 0:
-            return "登陆失败！", False, 0
+            return "登陆失败！" + message, False, 0
 
         t = get_time()
 
@@ -198,7 +198,7 @@ def run_single_account(user_mi, passwd_mi):
         log_str += runner.log_str
         log_str += f'{exec_msg}\n'
         exec_result = {"user": user_mi, "success": success, "msg": exec_msg}
-        send_message(user_mi, step, True, '')
+        send_message(user_mi, step, True, exec_msg)
     except:
         log_str += f"执行异常:{traceback.format_exc()}\n"
         log_str += traceback.format_exc()
