@@ -85,7 +85,7 @@ class MiMotionRunner:
 
     # 登录
     def login(self):
-
+        log_str = ''
         url1 = "https://api-user.huami.com/registrations/" + self.user + "/tokens"
         login_headers = {
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -100,13 +100,13 @@ class MiMotionRunner:
         }
         r1 = requests.post(url1, data=data1, headers=login_headers, allow_redirects=False)
         if r1.status_code != 303:
-            log_str += "登录异常，status: %d\n" % r1.status_code
+            log_str += "登录异常，status: %d" % r1.status_code
             return 0, 0, log_str
         location = r1.headers["Location"]
         try:
             code = get_access_token(location)
             if code is None:
-                log_str += "获取accessToken失败\n"
+                log_str += "获取accessToken失败"
                 return 0, 0, log_str
         except:
             log_str += f"获取accessToken异常:{traceback.format_exc()}\n"
