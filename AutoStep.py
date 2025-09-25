@@ -84,7 +84,7 @@ class MiMotionRunner:
 
     # 登录
     def login(self):
-        log_str = '执行成功'
+        log_str = '登录成功'
         url1 = "https://api-user.huami.com/registrations/" + self.user + "/tokens"
         login_headers = {
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -100,18 +100,15 @@ class MiMotionRunner:
         r1 = requests.post(url1, data=data1, headers=login_headers, allow_redirects=False)
         if r1.status_code != 303:
             log_str = "登录异常，status: %d" % r1.status_code
-            print(log_str)
             return 0, 0, log_str
         location = r1.headers["Location"]
         try:
             code = get_access_token(location)
             if code is None:
                 log_str = "获取accessToken失败"
-                print(log_str)
                 return 0, 0, log_str
         except Exception as e:
             log_str = f"获取accessToken异常:{e}\n"
-            print(log_str)
             return 0, 0, log_str
 
         url2 = "https://account.huami.com/v2/client/login"
@@ -159,12 +156,12 @@ class MiMotionRunner:
     # 主函数
     def login_and_post_step(self, min_step, max_step):
         if self.invalid:
-            return "账号或密码配置有误", False
+            return "账号或密码配置有误", 0
         step = str(random.randint(min_step, max_step))
         print(f"已设置为随机步数范围({min_step}~{max_step}) 随机值:{step}\n")
         login_token, userid, message = self.login()
         if login_token == 0:
-            return "登陆失败！" + message, False, 0
+            return message,  0
 
         t = get_time()
 
@@ -189,7 +186,7 @@ class MiMotionRunner:
         data = f'userid={userid}&last_sync_data_time=1597306380&device_type=0&last_deviceid=DA932FFFFE8816E7&data_json={data_json}'
 
         response = requests.post(url, data=data, headers=head).json()
-        return f"修改步数（{step}）[" + response['message'] + "]", True, step
+        return f"修改步数（{step}）[" + response['message'] + "]", step
 
 
 def run_single_account(user_mi, passwd_mi):
@@ -197,16 +194,13 @@ def run_single_account(user_mi, passwd_mi):
     print(log_str)
     try:
         runner = MiMotionRunner(user_mi, passwd_mi)
-        log_str, success, step = runner.login_and_post_step(min_step, max_step)
+        log_str, step = runner.login_and_post_step(min_step, max_step)
         print(log_str)
-        exec_result = {"user": user_mi, "success": success, "msg": log_str}
         send_message(user_mi, step, log_str)
     except Exception as e:
         log_str = f"执行异常:{e}\n"
         print(log_str)
-        exec_result = {"user": user_mi, "success": False, "msg": f"执行异常:{traceback.format_exc()}"}
         send_message(user_mi, 0, log_str)
-    return exec_result
 
 
 def get_wx_access_token():
@@ -214,7 +208,7 @@ def get_wx_access_token():
     url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}'.format(
         appID.strip(), appSecret.strip())
     response = requests.get(url).json()
-    print(response)
+    # print(response)
     access_token = response.get('access_token')
     return access_token
 
@@ -240,7 +234,7 @@ def send_message(user_mi, step, log_str):
         }
     }
     url = 'https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={}'.format(get_wx_access_token())
-    print(requests.post(url, json.dumps(body)).text)
+    requests.post(url, json.dumps(body))
 
 
 if __name__ == "__main__":
@@ -248,39 +242,44 @@ if __name__ == "__main__":
     time_bj = get_beijing_time()
     min_step = 29950
     max_step = 29999
-    if os.environ.__contains__("USER_CONFIG") is False:
-        print("未配置USER_CONFIG变量，无法执行")
-        exit(1)
-    else:
-        # region 初始化参数
-        user_config = dict()
-        step_config = dict()
-        wx_config = dict()
-        try:
-            user_config = dict(json.loads(os.environ.get("USER_CONFIG")))
-            if os.environ.__contains__("STEP_CONFIG") is False:
-                print("未配置STEP_CONFIG变量，使用默认值")
-            else:
-                step_config = dict(json.loads(os.environ.get("STEP_CONFIG")))
-                min_step = int(step_config.get('MIN_STEP'))
-                max_step = int(step_config.get('MAX_STEP'))
-
-            if os.environ.__contains__("WX_CONFIG") is False:
-                print("未配置WX_CONFIG变量，无法发送消息")
-            else:
-                wx_config = dict(json.loads(os.environ.get("WX_CONFIG")))
-                appID = wx_config.get("APP_ID")
-                appSecret = wx_config.get("APP_SECRET")
-                openId = wx_config.get("OPEN_ID")
-                templateId = wx_config.get("TEMPLATE_ID")
-        except:
-            print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
-            traceback.print_exc()
-            exit(1)
-        users = user_config.get('USER')
-        passwords = user_config.get('PWD')
-        if users is None or passwords is None:
-            print("未正确配置账号密码，无法执行")
-            exit(1)
-        # endregion
-        run_single_account(users, passwords)
+    # if os.environ.__contains__("USER_CONFIG") is False:
+    #     print("未配置USER_CONFIG变量，无法执行")
+    #     exit(1)
+    # else:
+    #     # region 初始化参数
+    #     user_config = dict()
+    #     step_config = dict()
+    #     wx_config = dict()
+    #     try:
+    #         user_config = dict(json.loads(os.environ.get("USER_CONFIG")))
+    #         if os.environ.__contains__("STEP_CONFIG") is False:
+    #             print("未配置STEP_CONFIG变量，使用默认值")
+    #         else:
+    #             step_config = dict(json.loads(os.environ.get("STEP_CONFIG")))
+    #             min_step = int(step_config.get('MIN_STEP'))
+    #             max_step = int(step_config.get('MAX_STEP'))
+    #
+    #         if os.environ.__contains__("WX_CONFIG") is False:
+    #             print("未配置WX_CONFIG变量，无法发送消息")
+    #         else:
+    #             wx_config = dict(json.loads(os.environ.get("WX_CONFIG")))
+    #             appID = wx_config.get("APP_ID")
+    #             appSecret = wx_config.get("APP_SECRET")
+    #             openId = wx_config.get("OPEN_ID")
+    #             templateId = wx_config.get("TEMPLATE_ID")
+    #     except:
+    #         print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
+    #         traceback.print_exc()
+    #         exit(1)
+    #     users = user_config.get('USER')
+    #     passwords = user_config.get('PWD')
+    #     if users is None or passwords is None:
+    #         print("未正确配置账号密码，无法执行")
+    #         exit(1)
+    #     # endregion
+    #     run_single_account(users, passwords)
+    appID = 'wxcfce4fbaf9687556'
+    appSecret = '56a9cfd1fa83b28ddb384a8a71b694da'
+    openId = 'ojt_C7fkFBFfMcnL74RCNZwDJqvQ'
+    templateId = 'Nchs0xVcBcvsRuD4IyTaTw6_-NTto8jOAf9_Bn5Qw0U'
+    run_single_account('1138897995@qq.com', 'zhangyu@520')
