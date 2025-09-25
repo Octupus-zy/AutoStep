@@ -65,7 +65,6 @@ class MiMotionRunner:
         user = str(_user)
         password = str(_passwd)
         self.invalid = False
-        self.log_str = ""
         if user == '' or password == '':
             self.error = "用户名或密码填写有误！"
             self.invalid = True
@@ -81,11 +80,11 @@ class MiMotionRunner:
             self.is_phone = False
         self.user = user
         self.fake_ip_addr = fake_ip()
-        self.log_str += f"创建虚拟ip地址：{self.fake_ip_addr}\n"
+        print(f"创建虚拟ip地址：{self.fake_ip_addr}\n")
 
     # 登录
     def login(self):
-        log_str = ''
+        log_str = '执行成功'
         url1 = "https://api-user.huami.com/registrations/" + self.user + "/tokens"
         login_headers = {
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -100,16 +99,19 @@ class MiMotionRunner:
         }
         r1 = requests.post(url1, data=data1, headers=login_headers, allow_redirects=False)
         if r1.status_code != 303:
-            log_str += "登录异常，status: %d" % r1.status_code
+            log_str = "登录异常，status: %d" % r1.status_code
+            print(log_str)
             return 0, 0, log_str
         location = r1.headers["Location"]
         try:
             code = get_access_token(location)
             if code is None:
-                log_str += "获取accessToken失败"
+                log_str = "获取accessToken失败"
+                print(log_str)
                 return 0, 0, log_str
-        except:
-            log_str += f"获取accessToken异常:{traceback.format_exc()}\n"
+        except Exception as e:
+            log_str = f"获取accessToken异常:{e}\n"
+            print(log_str)
             return 0, 0, log_str
 
         url2 = "https://account.huami.com/v2/client/login"
@@ -144,7 +146,7 @@ class MiMotionRunner:
         login_token = r2["token_info"]["login_token"]
         userid = r2["token_info"]["user_id"]
 
-        return login_token, userid, ''
+        return login_token, userid, log_str
 
     # 获取app_token
     def get_app_token(self, login_token):
@@ -159,8 +161,8 @@ class MiMotionRunner:
         if self.invalid:
             return "账号或密码配置有误", False
         step = str(random.randint(min_step, max_step))
-        self.log_str += f"已设置为随机步数范围({min_step}~{max_step}) 随机值:{step}\n"
-        login_token, userid, message  = self.login()
+        print(f"已设置为随机步数范围({min_step}~{max_step}) 随机值:{step}\n")
+        login_token, userid, message = self.login()
         if login_token == 0:
             return "登陆失败！" + message, False, 0
 
@@ -192,19 +194,18 @@ class MiMotionRunner:
 
 def run_single_account(user_mi, passwd_mi):
     log_str = f"[{format_now()}]\n账号：{desensitize_user_name(user_mi)}"
+    print(log_str)
     try:
         runner = MiMotionRunner(user_mi, passwd_mi)
-        exec_msg, success, step = runner.login_and_post_step(min_step, max_step)
-        log_str += runner.log_str
-        log_str += f'{exec_msg}\n'
-        exec_result = {"user": user_mi, "success": success, "msg": exec_msg}
-        send_message(user_mi, step, True, exec_msg)
-    except:
-        log_str += f"执行异常:{traceback.format_exc()}\n"
-        log_str += traceback.format_exc()
+        log_str, success, step = runner.login_and_post_step(min_step, max_step)
+        print(log_str)
+        exec_result = {"user": user_mi, "success": success, "msg": log_str}
+        send_message(user_mi, step, log_str)
+    except Exception as e:
+        log_str = f"执行异常:{e}\n"
+        print(log_str)
         exec_result = {"user": user_mi, "success": False, "msg": f"执行异常:{traceback.format_exc()}"}
-        send_message(user_mi, 0, False, log_str)
-    print(log_str)
+        send_message(user_mi, 0, log_str)
     return exec_result
 
 
@@ -218,7 +219,7 @@ def get_wx_access_token():
     return access_token
 
 
-def send_message(user_mi, step, success, log_str):
+def send_message(user_mi, step, log_str):
     body = {
         "touser": openId.strip(),
         "template_id": templateId.strip(),
@@ -234,7 +235,7 @@ def send_message(user_mi, step, success, log_str):
                 "value": step
             },
             "success": {
-                "value": "执行成功" if success else log_str
+                "value": log_str
             }
         }
     }
