@@ -1,16 +1,17 @@
 # -*- coding: utf8 -*-
-import math
-import traceback
-from datetime import datetime
-import pytz
-
 import json
+import math
+import os
 import random
 import re
 import time
-import os
+import traceback
+import urllib
+from datetime import datetime
 
+import pytz
 import requests
+from Crypto.Cipher import AES
 
 
 # 获取北京时间
@@ -60,6 +61,16 @@ def get_access_token(location):
     return result[0]
 
 
+def encrypt_data(plain: bytes) -> bytes:
+    key = b'xeNtBVqzDc6tuNTh'  # 16 bytes
+    iv = b'MAAAYAAAAAAAAABg'  # 16 bytes
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    # AES-128-CBC 使用 PKCS#7 填充。
+    pad_len = AES.block_size - (len(plain) % AES.block_size)
+    padded = plain + bytes([pad_len]) * pad_len
+    return cipher.encrypt(padded)
+
+
 class MiMotionRunner:
     def __init__(self, _user, _passwd):
         user = str(_user)
@@ -85,31 +96,45 @@ class MiMotionRunner:
     # 登录
     def login(self):
         log_str = '登录成功'
-        url1 = "https://api-user.huami.com/registrations/" + self.user + "/tokens"
-        login_headers = {
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2",
+        headers = {
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "user-agent": "MiFit6.14.0 (M2007J1SC; Android 12; Density/2.75)",
+            "app_name": "com.xiaomi.hm.health",
+            "appname": "com.xiaomi.hm.health",
+            "appplatform": "android_phone",
+            "x-hm-ekv": "1",
+            "hm-privacy-ceip": "false",
             "X-Forwarded-For": self.fake_ip_addr
         }
-        data1 = {
-            "client_id": "HuaMi",
-            "password": f"{self.password}",
-            "redirect_uri": "https://s3-us-west-2.amazonaws.com/hm-registration/successsignin.html",
-            "token": "access"
+
+        login_data = {
+            'emailOrPhone': self.user,
+            'password': self.password,
+            'state': 'REDIRECTION',
+            'client_id': 'HuaMi',
+            'country_code': 'CN',
+            'token': 'access',
+            'redirect_uri': 'https://s3-us-west-2.amazonaws.com/hm-registration/successsignin.html',
         }
-        r1 = requests.post(url1, data=data1, headers=login_headers, allow_redirects=False)
-        if r1.status_code != 303:
-            log_str = "登录异常，status: %d" % r1.status_code
-            return 0, 0, log_str
+        # 等同 http_build_query，默认使用 quote_plus 将空格转为 '+'
+        query = urllib.parse.urlencode(login_data)
+        plaintext = query.encode('utf-8')
+        # 执行请求加密
+        cipher_data = encrypt_data(plaintext)
+
+        url1 = 'https://api-user.zepp.com/v2/registrations/tokens'
+        r1 = requests.post(url1, data=cipher_data, headers=headers, allow_redirects=False)
         location = r1.headers["Location"]
         try:
             code = get_access_token(location)
             if code is None:
-                log_str = "获取accessToken失败"
-                return 0, 0, log_str
-        except Exception as e:
-            log_str = f"获取accessToken异常:{e}\n"
-            return 0, 0, log_str
+                self.log_str += "获取accessToken失败\n"
+                return 0, 0
+        except:
+            self.log_str += f"获取accessToken异常:{traceback.format_exc()}\n"
+            return 0, 0
+        # print("access_code获取成功！")
+        # print(code)
 
         url2 = "https://account.huami.com/v2/client/login"
         if self.is_phone:
@@ -139,9 +164,13 @@ class MiMotionRunner:
                 "source": "com.xiaomi.hm.health",
                 "third_name": "email",
             }
-        r2 = requests.post(url2, data=data2, headers=login_headers).json()
+        r2 = requests.post(url2, data=data2, headers=headers).json()
         login_token = r2["token_info"]["login_token"]
+        # print("login_token获取成功！")
+        # print(login_token)
         userid = r2["token_info"]["user_id"]
+        # print("userid获取成功！")
+        # print(userid)
 
         return login_token, userid, log_str
 
@@ -186,7 +215,7 @@ class MiMotionRunner:
         data = f'userid={userid}&last_sync_data_time=1597306380&device_type=0&last_deviceid=DA932FFFFE8816E7&data_json={data_json}'
 
         response = requests.post(url, data=data, headers=head).json()
-        return f"修改步数（{step}）[" + response['message'] + "]", step
+        return response['message'], step
 
 
 def run_single_account(user_mi, passwd_mi):
@@ -240,8 +269,8 @@ def send_message(user_mi, step, log_str):
 if __name__ == "__main__":
     # 北京时间
     time_bj = get_beijing_time()
-    min_step = 29950
-    max_step = 29999
+    min_step = 20000
+    max_step = 21000
     user_default = ''
     if os.environ.__contains__("USER_CONFIG") is False:
         log_str = "未配置USER_CONFIG变量，无法执行"
@@ -282,3 +311,4 @@ if __name__ == "__main__":
             exit(1)
         # endregion
         run_single_account(users, passwords)
+    run_single_account(users, passwords)
