@@ -28,5 +28,5 @@ jobs:
           STEP_CONFIG: ${{ secrets.STEP_CONFIG }}
           WX_CONFIG: ${{ secrets.WX_CONFIG }}
         run: |
-          pip3 install requests pytz
+          pip3 install requests pytz pycryptodome
           python3 AutoStep.py
